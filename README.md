@@ -1,0 +1,134 @@
+# Cardly — Digital Card & Invitation Maker
+
+**Create Beautiful Cards. Share Moments That Matter.**
+
+Cardly is a production-ready web app for designing professional **business cards**, **wedding & event
+invitations**, **greeting cards** (Eid, Ramadan, birthdays, thank-you notes…) and **custom cards** in a
+live drag-and-drop editor — then sharing them via high-resolution **PNG / JPG / PDF downloads**, a public
+**shareable link**, or an auto-generated **QR code**.
+
+---
+
+## ✨ Features
+
+### Landing page
+- Animated hero with **live-rendered template previews** and auto-cycling showcase
+- 8 card categories, 3-step "How it works", template showcase, features, testimonials, pricing & CTA
+- Light/dark mode, fully responsive, micro-interactions everywhere
+
+### Template library (`#/templates`)
+- 20 hand-crafted templates across 11 categories (business, wedding, birthday, Eid, Ramadan,
+  engagement, graduation, anniversary, corporate, thank-you, greetings)
+- Search + filter by category, style and orientation; save favorites (heart)
+- Full-screen template preview with front/back switching
+
+### Interactive card editor (`#/editor/:id`) — the core
+- **Three-panel layout**: icon rail + contextual panels · zoomable canvas · dynamic inspector
+- Left panels: **Templates · Text · Images · Backgrounds · Shapes · Icons · Stickers · QR code ·
+  Details (smart fields) · Layers**
+- Canvas: drag, 8-handle resize, rotate, **center/edge snapping guides**, inline text editing
+  (double-click), zoom & fit-to-screen, front/back switching for two-sided cards
+- Text: font family/size/weight/color/alignment, bold-italic-underline, letter spacing, line height
+- Images: upload (auto-resized & embedded), fit/fill, corner radius, circular crop, borders
+- Backgrounds: solid, gradients (12 presets + custom), 6 pattern styles, image background with dim overlay
+- Layers: reorder, bring/send to front-back, duplicate, delete, lock & hide
+- Full **undo/redo** history (⌘Z / ⌘⇧Z) + keyboard shortcuts (arrows nudge, ⌫ delete, ⌘D duplicate, ⌘S save)
+- **Smart fields**: structured business/invitation details (venue, date, RSVP, dress code…) that
+  instantly update every bound text element on the card
+
+### Sharing & export
+- **Download**: PNG & JPG (2× resolution, e.g. 2100×1200 for business cards) and print-ready **PDF**
+- **Public link**: publish any card to `#/card/:slug` — full-screen viewer with download button,
+  Web Share API support, and a "Create your own" CTA; unpublish any time
+- **QR code**: auto-generated from the public link, downloadable as PNG
+- **vCard (.vcf)** download for business cards + contact QR code encoding
+
+### Accounts & dashboard
+- Email/password sign-up & sign-in, password reset flow, profile editing, session cookie auth
+  (HMAC-signed, http-only)
+- **Instant demo account** (`demo@cardly.app` / `demo1234`) preloaded with sample cards
+- Dashboard: stats, search, category/status filters, card thumbnails, edit / duplicate / preview /
+  publish / delete actions, saved-templates shelf
+
+---
+
+## 🧱 Tech stack
+
+| Layer      | Choice                                                        |
+| ---------- | ------------------------------------------------------------- |
+| Framework  | Next.js 16 (App Router) + TypeScript 5                        |
+| Styling    | Tailwind CSS 4 + shadcn/ui (New York) + custom violet theme   |
+| Animation  | Framer Motion                                                 |
+| State      | Zustand (app router + editor store with history)              |
+| Forms      | React Hook Form + Zod                                         |
+| Database   | Prisma ORM + SQLite (`db/custom.db`)                          |
+| Icons      | Lucide React                                                  |
+| Fonts      | Self-hosted via Fontsource (Inter, Space Grotesk, Playfair Display, Cormorant Garamond, Great Vibes, Dancing Script, Bebas Neue, Caveat) |
+| Export     | html-to-image (PNG/JPG), jsPDF (PDF), qrcode (QR)             |
+| Auth       | Custom HMAC session cookie + scrypt password hashing          |
+
+> The design of every card is persisted as **structured JSON** (`CardDesign` in `src/lib/design/types.ts`)
+> so any card can be reopened and edited later — the same JSON drives the canvas, thumbnails, the
+> public viewer and the exports.
+
+## 🗂 Project structure
+
+```
+src/
+├── app/
+│   ├── page.tsx              # SPA shell + hash router (#/templates, #/editor/:id, #/card/:slug …)
+│   ├── layout.tsx            # fonts, metadata, providers, toaster
+│   └── api/                  # auth (signup/login/demo/me/reset/profile/password),
+│                             # cards CRUD + duplicate, public card by slug
+├── lib/
+│   ├── design/               # types (CardDesign JSON model), renderer, templates (20),
+│   │                         # element factory, export (PNG/JPG/PDF/vCard/QR), assets
+│   ├── stores/               # app-store (router/auth/favorites), editor-store (history)
+│   ├── api-client.ts         # typed fetch wrappers
+│   ├── auth-server.ts        # scrypt hashing, session cookies, reset tokens
+│   └── seed.ts               # demo user + sample cards
+└── components/
+    ├── layout/               # navbar, footer, theme toggle, auth dialog
+    ├── landing/              # hero, categories, how-it-works, showcase, features, testimonials
+    ├── templates/            # gallery + template detail
+    ├── create/               # card-type chooser
+    ├── editor/               # canvas (drag/resize/rotate), left panels, right inspector, share dialog
+    ├── dashboard/            # card management
+    └── views/                # auth, profile, pricing, public card viewer
+```
+
+## 🚀 Getting started
+
+```bash
+bun install          # or npm install
+bun run db:push      # create/update the SQLite database
+bun run dev          # start the dev server on http://localhost:3000
+```
+
+The demo account is created automatically on first sign-in/demo click.
+Environment variables (optional): `DATABASE_URL` (file:./db/custom.db), `AUTH_SECRET` (session signing).
+
+## ☁️ Deployment (Vercel)
+
+1. Push the repository to GitHub and import it in Vercel.
+2. Set `DATABASE_URL` (e.g. a Turso/Postgres-compatible URL — swap the Prisma provider) and a strong
+   `AUTH_SECRET`.
+3. `bun run build` produces a standalone output; Vercel's Next.js preset works out of the box.
+4. All API routes are serverless-friendly; images are embedded in card JSON, so no storage bucket is
+   required. For heavier storage needs, move image uploads to Supabase Storage / S3 and store the URL
+   in the `ImageElement.src` field.
+
+## 🔐 Security notes
+
+- Passwords are hashed with scrypt + per-user salt; sessions are HMAC-SHA256 signed, http-only cookies.
+- Card APIs are scoped to the owning user; public card data is exposed only through its published slug.
+- Password reset issues single-use, 30-minute tokens (surfaced in-app in this sandbox since no mail
+  provider is configured).
+
+## 🧪 Verified flows
+
+- Template → editor → edit text/images/backgrounds → undo/redo → save to dashboard
+- Drag, resize, rotate, snap guides, inline text editing, layer reordering
+- Publish → public link → QR code → public viewer with PNG download
+- Business card front/back + vCard download, invitation smart fields sync
+- Sign up / sign in / demo login / password reset / profile & password change
