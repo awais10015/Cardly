@@ -318,7 +318,19 @@ function ElementView({ el }: { el: CardElement }) {
 
 /* ---------------------------- side renderer -------------------------- */
 
-export function CardSideView({ side, width, height }: { side: CardSide; width: number; height: number }) {
+export function CardSideView({
+  side,
+  width,
+  height,
+  excludeElementId,
+}: {
+  side: CardSide
+  width: number
+  height: number
+  /** Element currently being edited inline in the canvas — skipped so its ghost text
+   *  doesn't render underneath the live editing textarea. */
+  excludeElementId?: string | null
+}) {
   const bg = side.background
   return (
     <>
@@ -328,7 +340,7 @@ export function CardSideView({ side, width, height }: { side: CardSide; width: n
         <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${bg.overlay})` }} />
       )}
       {side.elements.map((el) =>
-        el.hidden ? null : (
+        el.hidden || el.id === excludeElementId ? null : (
           <div
             key={el.id}
             style={{
@@ -359,6 +371,7 @@ export function CardRenderer({
   className,
   style,
   shadow = true,
+  excludeElementId,
 }: {
   design: CardDesign
   side?: 'front' | 'back'
@@ -366,6 +379,7 @@ export function CardRenderer({
   className?: string
   style?: React.CSSProperties
   shadow?: boolean
+  excludeElementId?: string | null
 }) {
   const cardSide = side === 'back' && design.back ? design.back : design.front
   return (
@@ -381,7 +395,12 @@ export function CardRenderer({
         ...style,
       }}
     >
-      <CardSideView side={cardSide} width={design.width} height={design.height} />
+      <CardSideView
+        side={cardSide}
+        width={design.width}
+        height={design.height}
+        excludeElementId={excludeElementId}
+      />
     </div>
   )
 }

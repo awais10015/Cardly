@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { CardRenderer } from '@/lib/design/renderer'
+import { CardRenderer, fontStack } from '@/lib/design/renderer'
 import { useEditor } from '@/lib/stores/editor-store'
 import type { CardDesign, CardElement, TextElement } from '@/lib/design/types'
 import { cn } from '@/lib/utils'
@@ -205,6 +205,12 @@ export function EditorCanvas() {
 
   const sel = side.elements.find((el) => el.id === selectedId) ?? null
 
+  // While a text element is being edited inline, the live <textarea> shows the new
+  // text on top — so tell the base renderer to skip that element, otherwise the old
+  // text stays visible underneath ("ghost word") until commit.
+  const editingEl = editingId ? side.elements.find((el) => el.id === editingId) : null
+  const editingTextId = editingEl && editingEl.type === 'text' && !editingEl.hidden ? editingId : null
+
   return (
     <div
       ref={containerRef}
@@ -222,7 +228,7 @@ export function EditorCanvas() {
           className="absolute left-0 top-0 origin-top-left overflow-hidden rounded-[28px] shadow-2xl shadow-black/25"
           style={{ width: design.width, height: design.height, transform: `scale(${scale})` }}
         >
-          <CardRenderer design={design} side={activeSide} radius={28} shadow={false} />
+          <CardRenderer design={design} side={activeSide} radius={28} shadow={false} excludeElementId={editingTextId} />
 
           {/* ---------- interaction layer ---------- */}
           <div data-backdrop="true" className="absolute inset-0" style={{ pointerEvents: gesturing ? 'none' : 'auto' }}>
@@ -372,23 +378,13 @@ function TextEditingBox({
         }
         e.stopPropagation()
       }}
-      className="absolute z-20 resize-none overflow-hidden bg-white/5 outline-2 outline-dashed outline-violet-500"
+      className="absolute z-20 resize-none overflow-hidden bg-transparent outline-2 outline-dashed outline-violet-500"
       style={{
         left: el.x,
         top: el.y,
         width: el.w,
         height: Math.max(el.h, el.fontSize * el.lineHeight * 1.4),
-        fontFamily:
-          {
-            Inter: "'Inter', sans-serif",
-            'Space Grotesk': "'Space Grotesk', sans-serif",
-            'Playfair Display': "'Playfair Display', serif",
-            'Cormorant Garamond': "'Cormorant Garamond', serif",
-            'Great Vibes': "'Great Vibes', cursive",
-            'Dancing Script': "'Dancing Script', cursive",
-            'Bebas Neue': "'Bebas Neue', sans-serif",
-            Caveat: "'Caveat', cursive",
-          }[el.fontFamily] ?? 'sans-serif',
+        fontFamily: fontStack(el.fontFamily),
         fontSize: el.fontSize,
         fontWeight: el.fontWeight,
         color: el.color,
@@ -396,7 +392,10 @@ function TextEditingBox({
         lineHeight: el.lineHeight,
         letterSpacing: el.letterSpacing,
         fontStyle: el.italic ? 'italic' : 'normal',
+        textDecoration: el.underline ? 'underline' : 'none',
         textTransform: el.uppercase ? 'uppercase' : 'none',
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
         padding: 0,
         border: 'none',
       }}
