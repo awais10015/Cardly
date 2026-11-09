@@ -4,8 +4,8 @@
  * from the environment (sqlite | postgresql | mysql). SQLite is the default
  * so local dev works with zero configuration.
  *
- *   DB_PROVIDER=postgresql bun run db:push
- *   bun run db:setup          # uses whatever .env contains
+ *   DB_PROVIDER=postgresql npm run db:push
+ *   npm run db:setup          # uses whatever .env contains
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
@@ -32,4 +32,4 @@ if (current === wanted) {
 schema = schema.replace(/provider\s*=\s*"(sqlite|postgresql|mysql)"/, `provider = "${wanted}"`)
 writeFileSync(schemaPath, schema)
 console.log(`✔ Prisma provider switched: ${current} → ${wanted}`)
-console.warn('  Reminder: run `bun run db:push` (and migrate your data — provider switch starts empty).')
+console.warn('  Reminder: run `npm run db:push` (and migrate your data — provider switch starts empty).')

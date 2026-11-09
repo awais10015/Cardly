@@ -100,10 +100,11 @@ src/
 ## 🚀 Getting started
 
 ```bash
-bun install              # or npm install
+npm install
+
 cp .env.example .env     # dummy env — every variable is explained inline
-bun run db:setup         # sync Prisma provider + generate client + create the database
-bun run dev              # start the dev server on http://localhost:3000
+npm run db:setup         # sync Prisma provider + generate client + create the database
+npm run dev              # start the dev server on http://localhost:3000
 ```
 
 The demo account is created automatically on first sign-in/demo click. Everything runs with the
@@ -132,7 +133,7 @@ All backend configuration is centralized in `src/lib/env.ts` and driven by these
 | `DEBUG_PRISMA` | — | `1` logs all queries in production |
 
 **Switching to PostgreSQL/MySQL:** set `DB_PROVIDER=postgresql` + a matching `DATABASE_URL`
-then run `bun run db:setup` — the schema provider is rewritten for you. Note the database starts
+then run `npm run db:setup` — the schema provider is rewritten for you. Note the database starts
 empty (migrate your SQLite data separately if needed).
 
 **Health & config endpoints:** `GET /api/health` (db up/down + active config) and
@@ -145,7 +146,7 @@ empty (migrate your SQLite data separately if needed).
    `NEXT_PUBLIC_APP_URL`, and turn `DEMO_MODE` off unless you want the demo button).
 3. Prisma needs the database reachable during build — with Postgres/Neon add
    `POSTGRES_PRISMA_URL`-style pooled connection if your provider requires it.
-4. `bun run build` produces a standalone output; Vercel's Next.js preset works out of the box.
+4. `npm run build` produces a standalone output; Vercel's Next.js preset works out of the box.
 5. All API routes are serverless-friendly; images are embedded in card JSON, so no storage bucket is
    required. For heavier storage needs, move image uploads to Supabase Storage / S3 and store the URL
    in the `ImageElement.src` field.
