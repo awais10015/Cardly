@@ -2,10 +2,10 @@ import 'server-only'
 import crypto from 'node:crypto'
 import { cookies } from 'next/headers'
 import { db } from '@/lib/db'
+import { AUTH_SECRET, env } from '@/lib/env'
 
 const COOKIE_NAME = 'cardly_session'
-const SESSION_DAYS = 30
-const SECRET = process.env.AUTH_SECRET ?? 'cardly-dev-secret-7f3a9c2e'
+const SESSION_DAYS = env.sessionDays
 
 /* ----------------------------- passwords ----------------------------- */
 
@@ -26,7 +26,7 @@ export function verifyPassword(password: string, stored: string): boolean {
 /* ------------------------------ sessions ----------------------------- */
 
 function sign(value: string): string {
-  return crypto.createHmac('sha256', SECRET).update(value).digest('hex')
+  return crypto.createHmac('sha256', AUTH_SECRET).update(value).digest('hex')
 }
 
 function makeToken(userId: string): string {
@@ -49,7 +49,7 @@ export async function setSessionCookie(userId: string) {
   store.set(COOKIE_NAME, makeToken(userId), {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: env.isProd,
     maxAge: SESSION_DAYS * 24 * 60 * 60,
     path: '/',
   })

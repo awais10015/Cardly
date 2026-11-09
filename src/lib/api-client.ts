@@ -26,7 +26,11 @@ export const authApi = {
   signup: (name: string, email: string, password: string) =>
     request<{ user: SessionUser }>('/api/auth/signup', { method: 'POST', body: JSON.stringify({ name, email, password }) }),
   logout: () => request<{ ok: true }>('/api/auth/logout', { method: 'POST' }),
-  reset: (email: string) => request<{ ok: true; resetPath: string }>('/api/auth/reset', { method: 'POST', body: JSON.stringify({ email }) }),
+  reset: (email: string) =>
+    request<{ ok: true; resetPath: string | null; emailed: boolean }>('/api/auth/reset', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
   resetConfirm: (token: string, password: string) =>
     request<{ ok: true }>('/api/auth/reset-confirm', { method: 'POST', body: JSON.stringify({ token, password }) }),
   updateProfile: (name: string, email: string) =>
@@ -62,6 +66,10 @@ export const publicApi = {
 }
 
 export function publicCardUrl(slug: string): string {
-  if (typeof window === 'undefined') return `/card/${slug}`
-  return `${window.location.origin}/#/card/${slug}`
+  // APP_URL (NEXT_PUBLIC_APP_URL) wins when set so QR codes & shared links
+  // keep pointing at the canonical domain behind proxies/preview URLs.
+  const origin =
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') ||
+    (typeof window !== 'undefined' ? window.location.origin : '')
+  return `${origin}/#/card/${slug}`
 }

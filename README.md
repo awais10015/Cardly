@@ -100,21 +100,53 @@ src/
 ## 🚀 Getting started
 
 ```bash
-bun install          # or npm install
-bun run db:push      # create/update the SQLite database
-bun run dev          # start the dev server on http://localhost:3000
+bun install              # or npm install
+cp .env.example .env     # dummy env — every variable is explained inline
+bun run db:setup         # sync Prisma provider + generate client + create the database
+bun run dev              # start the dev server on http://localhost:3000
 ```
 
-The demo account is created automatically on first sign-in/demo click.
-Environment variables (optional): `DATABASE_URL` (file:./db/custom.db), `AUTH_SECRET` (session signing).
+The demo account is created automatically on first sign-in/demo click. Everything runs with the
+default `.env.example` values — you only **need** to change variables when you go to production.
+
+## ⚙️ Environment variables
+
+All backend configuration is centralized in `src/lib/env.ts` and driven by these variables
+(a documented dummy template lives in **`.env.example`** — copy it, change values, done):
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `DB_PROVIDER` | `sqlite` | `sqlite` \| `postgresql` \| `mysql` — the Prisma schema provider is switched automatically |
+| `DATABASE_URL` | `file:./db/custom.db` | Connection string, must match `DB_PROVIDER` |
+| `AUTH_SECRET` | dev fallback | 🔴 Session-cookie signing secret. **Required in production** (app refuses to boot without it). Generate: `openssl rand -hex 32` |
+| `SESSION_TTL_DAYS` | `30` | Login session lifetime |
+| `APP_URL` | request origin | 🔴 Canonical public origin (no trailing slash) used for share links, QR codes & reset e-mails |
+| `NEXT_PUBLIC_APP_URL` | — | Same value, readable by the browser (keeps QR codes on your real domain) |
+| `APP_NAME` | `Cardly` | App name used in e-mails |
+| `DEMO_MODE` | `true` | `false` hides the instant-demo button and disables `/api/auth/demo` |
+| `DEMO_EMAIL` / `DEMO_PASSWORD` | `demo@cardly.app` / `demo1234` | Demo account credentials |
+| `RESEND_API_KEY` | — | Optional. When set, password-reset links are e-mailed for real (Resend, plain fetch) |
+| `EMAIL_FROM` | `Cardly <onboarding@resend.dev>` | Sender identity for reset e-mails |
+| `RATE_LIMIT_MAX` | `20` | Auth attempts per IP per window (login/signup/reset) |
+| `RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window |
+| `DEBUG_PRISMA` | — | `1` logs all queries in production |
+
+**Switching to PostgreSQL/MySQL:** set `DB_PROVIDER=postgresql` + a matching `DATABASE_URL`
+then run `bun run db:setup` — the schema provider is rewritten for you. Note the database starts
+empty (migrate your SQLite data separately if needed).
+
+**Health & config endpoints:** `GET /api/health` (db up/down + active config) and
+`GET /api/config` (public client settings).
 
 ## ☁️ Deployment (Vercel)
 
 1. Push the repository to GitHub and import it in Vercel.
-2. Set `DATABASE_URL` (e.g. a Turso/Postgres-compatible URL — swap the Prisma provider) and a strong
-   `AUTH_SECRET`.
-3. `bun run build` produces a standalone output; Vercel's Next.js preset works out of the box.
-4. All API routes are serverless-friendly; images are embedded in card JSON, so no storage bucket is
+2. Set the 🔴 variables from the table above (`DATABASE_URL`, `AUTH_SECRET`, `APP_URL`,
+   `NEXT_PUBLIC_APP_URL`, and turn `DEMO_MODE` off unless you want the demo button).
+3. Prisma needs the database reachable during build — with Postgres/Neon add
+   `POSTGRES_PRISMA_URL`-style pooled connection if your provider requires it.
+4. `bun run build` produces a standalone output; Vercel's Next.js preset works out of the box.
+5. All API routes are serverless-friendly; images are embedded in card JSON, so no storage bucket is
    required. For heavier storage needs, move image uploads to Supabase Storage / S3 and store the URL
    in the `ImageElement.src` field.
 
@@ -122,8 +154,9 @@ Environment variables (optional): `DATABASE_URL` (file:./db/custom.db), `AUTH_SE
 
 - Passwords are hashed with scrypt + per-user salt; sessions are HMAC-SHA256 signed, http-only cookies.
 - Card APIs are scoped to the owning user; public card data is exposed only through its published slug.
-- Password reset issues single-use, 30-minute tokens (surfaced in-app in this sandbox since no mail
-  provider is configured).
+- Password reset issues single-use, 30-minute tokens. Without a mail provider (`RESEND_API_KEY` unset)
+  the token is surfaced in the UI; with one configured, a styled reset e-mail is sent instead.
+- Auth endpoints (login / signup / reset / reset-confirm) are rate-limited per IP.
 
 ## 🧪 Verified flows
 

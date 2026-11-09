@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { Logo } from '@/components/layout/navbar'
+import { useAppConfig } from '@/hooks/use-app-config'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -30,6 +31,7 @@ type SignupForm = z.infer<typeof signupSchema>
 
 export function AuthView() {
   const { user, setUser, navigate } = useApp()
+  const appConfig = useAppConfig()
   const [busy, setBusy] = React.useState<string | null>(null)
   const [tab, setTab] = React.useState<'login' | 'signup'>('login')
 
@@ -77,7 +79,6 @@ export function AuthView() {
       setBusy(null)
     }
   }
-
   return (
     <main className="hero-glow flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-md">
@@ -205,19 +206,23 @@ export function AuthView() {
                   </TabsContent>
                 </Tabs>
 
-                <div className="my-4 flex items-center gap-3">
-                  <span className="h-px flex-1 bg-border" />
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
-                  <span className="h-px flex-1 bg-border" />
-                </div>
+                {appConfig?.demoMode !== false && (
+                  <>
+                    <div className="my-4 flex items-center gap-3">
+                      <span className="h-px flex-1 bg-border" />
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
+                      <span className="h-px flex-1 bg-border" />
+                    </div>
 
-                <Button variant="outline" className="w-full rounded-full" onClick={onDemo} disabled={busy !== null}>
-                  {busy === 'demo' ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-                  Try the instant demo account
-                </Button>
-                <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs text-muted-foreground">
-                  <Sparkles className="h-3 w-3 text-violet-500" /> demo@cardly.app · preloaded with sample cards
-                </p>
+                    <Button variant="outline" className="w-full rounded-full" onClick={onDemo} disabled={busy !== null}>
+                      {busy === 'demo' ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                      Try the instant demo account
+                    </Button>
+                    <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs text-muted-foreground">
+                      <Sparkles className="h-3 w-3 text-violet-500" /> demo@cardly.app · preloaded with sample cards
+                    </p>
+                  </>
+                )}
               </>
             )}
           </CardContent>

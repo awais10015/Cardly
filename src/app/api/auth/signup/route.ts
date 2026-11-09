@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hashPassword, setSessionCookie, publicUser } from '@/lib/auth-server'
 import { ensureDemoUser } from '@/lib/seed'
+import { env } from '@/lib/env'
+import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  const limit = rateLimit(`signup:${clientIp(req.headers)}`)
+  if (!limit.ok) return tooMany(limit)
+
   try {
-    await ensureDemoUser()
+    if (env.demoMode) await ensureDemoUser()
     const { name, email, password } = (await req.json()) as { name?: string; email?: string; password?: string }
     if (!name?.trim() || !email?.trim() || !password) {
       return NextResponse.json({ error: 'Name, email and password are required.' }, { status: 400 })

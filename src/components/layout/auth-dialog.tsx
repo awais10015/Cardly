@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { useAppConfig } from '@/hooks/use-app-config'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -30,10 +31,12 @@ type SignupForm = z.infer<typeof signupSchema>
 
 export function AuthDialog() {
   const { authOpen, closeAuth, authReason, setUser, navigate } = useApp()
+  const appConfig = useAppConfig()
   const [mode, setMode] = React.useState<'login' | 'signup'>('login')
   const [forgotStep, setForgotStep] = React.useState<'idle' | 'sent'>('idle')
   const [forgotEmail, setForgotEmail] = React.useState('')
   const [forgotToken, setForgotToken] = React.useState<string | null>(null)
+  const [forgotEmailed, setForgotEmailed] = React.useState(false)
 
   const loginForm = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } })
   const signupForm = useForm<SignupForm>({ resolver: zodResolver(signupSchema), defaultValues: { name: '', email: '', password: '' } })
@@ -44,6 +47,7 @@ export function AuthDialog() {
     if (authOpen) {
       setForgotStep('idle')
       setForgotToken(null)
+      setForgotEmailed(false)
     }
   }, [authOpen])
 
@@ -102,6 +106,7 @@ export function AuthDialog() {
       const res = await authApi.reset(forgotEmail)
       setForgotStep('sent')
       setForgotToken(res.resetPath)
+      setForgotEmailed(Boolean(res.emailed))
     } catch (err) {
       toast.error((err as Error).message)
     } finally {
@@ -134,11 +139,20 @@ export function AuthDialog() {
               {forgotStep === 'sent' ? (
                 <div className="space-y-4 text-sm">
                   <p className="text-muted-foreground">
-                    If an account exists for <span className="font-medium text-foreground">{forgotEmail}</span>, a reset
-                    link has been generated. This sandbox has no mail provider, so use the button below to set a new
-                    password.
+                    {forgotEmailed ? (
+                      <>
+                        If an account exists for <span className="font-medium text-foreground">{forgotEmail}</span>, a
+                        reset link is on its way — check your inbox. The link is valid for 30 minutes.
+                      </>
+                    ) : (
+                      <>
+                        If an account exists for <span className="font-medium text-foreground">{forgotEmail}</span>, a
+                        reset token has been generated. This deployment has no mail provider, so use the button below
+                        to set a new password.
+                      </>
+                    )}
                   </p>
-                  <ResetWithToken token={forgotToken} onDone={() => setForgotStep('idle')} />
+                  {!forgotEmailed && <ResetWithToken token={forgotToken} onDone={() => setForgotStep('idle')} />}
                 </div>
               ) : (
                 <Form {...loginForm}>
@@ -238,19 +252,23 @@ export function AuthDialog() {
             </TabsContent>
           </Tabs>
 
-          <div className="my-4 flex items-center gap-3">
-            <Separator className="flex-1" />
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
-            <Separator className="flex-1" />
-          </div>
+          {appConfig?.demoMode !== false && (
+            <>
+              <div className="my-4 flex items-center gap-3">
+                <Separator className="flex-1" />
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
+                <Separator className="flex-1" />
+              </div>
 
-          <Button variant="outline" className="w-full" onClick={onDemo} disabled={busy !== null}>
-            {busy === 'demo' ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-            Try the instant demo account
-          </Button>
-          <p className="mt-2 text-center text-xs text-muted-foreground">
-            Demo comes preloaded with sample cards · demo@cardly.app
-          </p>
+              <Button variant="outline" className="w-full" onClick={onDemo} disabled={busy !== null}>
+                {busy === 'demo' ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                Try the instant demo account
+              </Button>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Demo comes preloaded with sample cards · demo@cardly.app
+              </p>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

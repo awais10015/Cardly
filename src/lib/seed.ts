@@ -1,17 +1,22 @@
 import 'server-only'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth-server'
+import { env } from '@/lib/env'
 import { instantiateTemplate, getTemplate } from '@/lib/design/templates'
 import type { CardDesign } from '@/lib/design/types'
 
-export const DEMO_EMAIL = 'demo@cardly.app'
-export const DEMO_PASSWORD = 'demo1234'
+export const DEMO_EMAIL = env.demoEmail
+export const DEMO_PASSWORD = env.demoPassword
 
 /**
  * Idempotently ensures the demo account exists with a few sample cards.
  * Called from auth routes so the sandbox database always has data.
+ * No-op when DEMO_MODE is disabled via the environment.
  */
 export async function ensureDemoUser(): Promise<{ id: string; email: string; name: string }> {
+  if (!env.demoMode) {
+    throw new Error('Demo mode is disabled (DEMO_MODE=off).')
+  }
   const existing = await db.user.findUnique({ where: { email: DEMO_EMAIL } })
   if (existing) return existing
 
