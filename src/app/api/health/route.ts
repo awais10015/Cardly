@@ -8,7 +8,7 @@ import { envSummary } from '@/lib/env'
  */
 export async function GET() {
   try {
-    await db.$queryRaw`SELECT 1`
+    await db.ping()
     return NextResponse.json({ ok: true, service: 'cardly', database: 'up', config: envSummary() })
   } catch (err) {
     console.error('health check failed', err)

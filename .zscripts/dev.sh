@@ -125,10 +125,10 @@ echo "[NPM] Installing dependencies..."
 npm install --no-audit --no-fund
 log_step_end "npm install"
 
-log_step_start "npm run db:push"
-echo "[NPM] Setting up database..."
-npm run db:push
-log_step_end "npm run db:push"
+log_step_start "npm run db:start"
+echo "[NPM] Starting local MongoDB..."
+npm run db:start
+log_step_end "npm run db:start"
 
 log_step_start "Starting Next.js dev server"
 echo "[NPM] Starting development server..."

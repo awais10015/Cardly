@@ -31,18 +31,18 @@ function warn(key: string, message: string) {
 
 /* ------------------------------- database -------------------------------- */
 
-export type DbProvider = 'sqlite' | 'postgresql' | 'mysql'
-
-const provider = str('DB_PROVIDER', 'sqlite').toLowerCase()
-const PROVIDERS: DbProvider[] = ['sqlite', 'postgresql', 'mysql']
-
 export const env = {
   nodeEnv: str('NODE_ENV', 'development'),
   isProd: process.env.NODE_ENV === 'production',
 
-  /** Prisma provider — must match DATABASE_URL. sqlite keeps local dev zero-config. */
-  dbProvider: (PROVIDERS.includes(provider as DbProvider) ? provider : 'sqlite') as DbProvider,
-  databaseUrl: str('DATABASE_URL', 'file:./db/custom.db'),
+  /**
+   * MongoDB connection string. Local dev defaults to a mongod on 127.0.0.1:27017
+   * (started automatically by `npm run dev` via scripts/mongo-start.sh).
+   * For Atlas / any managed cluster, paste your mongodb+srv:// URI here.
+   */
+  mongoUri: str('MONGODB_URI', 'mongodb://127.0.0.1:27017'),
+  /** Database name — used when the URI itself has no `/dbname` suffix. */
+  mongoDb: str('MONGODB_DB', 'cardly'),
 
   /** Secret used to sign session cookies. REQUIRED in production. */
   authSecret: str('AUTH_SECRET', ''),
@@ -94,16 +94,10 @@ if (env.isProd && !env.appUrl) {
   warn('APP_URL', 'not set — share links will fall back to the request origin.')
 }
 
-if (env.dbProvider !== 'sqlite' && env.databaseUrl.startsWith('file:')) {
+if (!/^mongodb(\+srv)?:\/\//.test(env.mongoUri)) {
   throw new Error(
-    `[env] DB_PROVIDER=${env.dbProvider} but DATABASE_URL looks like a SQLite path (${env.databaseUrl}). ` +
-      'Use a matching connection string, e.g. postgresql://user:pass@host:5432/dbname',
-  )
-}
-if (env.dbProvider === 'sqlite' && !env.databaseUrl.startsWith('file:')) {
-  throw new Error(
-    `[env] DATABASE_URL=${env.databaseUrl} does not match DB_PROVIDER=sqlite. ` +
-      'Either use file:./db/custom.db or set DB_PROVIDER=postgresql|mysql.',
+    `[env] MONGODB_URI=${env.mongoUri} is not a valid MongoDB connection string. ` +
+      'Use mongodb://… or mongodb+srv://… (Atlas), e.g. mongodb+srv://user:pass@cluster.mongodb.net/cardly',
   )
 }
 
@@ -114,7 +108,7 @@ export const mailerEnabled = Boolean(env.resendApiKey)
 export function envSummary() {
   return {
     nodeEnv: env.nodeEnv,
-    dbProvider: env.dbProvider,
+    db: `mongodb/${env.mongoDb}`,
     authSecretSet: Boolean(env.authSecret),
     appUrl: env.appUrl || '(request origin)',
     demoMode: env.demoMode,

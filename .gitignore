@@ -34,6 +34,10 @@ yarn-error.log*
 .env*
 !.env.example
 
+# local MongoDB data + downloaded mongod binary
+db/mongo-data
+.mongo/
+
 # vercel
 .vercel
 

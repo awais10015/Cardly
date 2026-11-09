@@ -61,7 +61,7 @@ live drag-and-drop editor — then sharing them via high-resolution **PNG / JPG 
 | Animation  | Framer Motion                                                 |
 | State      | Zustand (app router + editor store with history)              |
 | Forms      | React Hook Form + Zod                                         |
-| Database   | Prisma ORM + SQLite (`db/custom.db`)                          |
+| Database   | MongoDB (`mongodb` driver, Prisma-style data layer in `src/lib/db.ts`) |
 | Icons      | Lucide React                                                  |
 | Fonts      | Self-hosted via Fontsource (Inter, Space Grotesk, Playfair Display, Cormorant Garamond, Great Vibes, Dancing Script, Bebas Neue, Caveat) |
 | Export     | html-to-image (PNG/JPG), jsPDF (PDF), qrcode (QR)             |
@@ -103,9 +103,12 @@ src/
 npm install
 
 cp .env.example .env     # dummy env — every variable is explained inline
-npm run db:setup         # sync Prisma provider + generate client + create the database
-npm run dev              # start the dev server on http://localhost:3000
+npm run dev              # auto-starts local MongoDB + the dev server on http://localhost:3000
 ```
+
+MongoDB runs locally out of the box (`scripts/mongo-start.sh` boots a local mongod,
+data lives in `db/mongo-data/`). To use **MongoDB Atlas** instead, set `MONGODB_URI`
+in `.env` to your cluster URI — no local mongod is started when the URI is remote.
 
 The demo account is created automatically on first sign-in/demo click. Everything runs with the
 default `.env.example` values — you only **need** to change variables when you go to production.
@@ -117,8 +120,8 @@ All backend configuration is centralized in `src/lib/env.ts` and driven by these
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `DB_PROVIDER` | `sqlite` | `sqlite` \| `postgresql` \| `mysql` — the Prisma schema provider is switched automatically |
-| `DATABASE_URL` | `file:./db/custom.db` | Connection string, must match `DB_PROVIDER` |
+| `MONGODB_URI` | `mongodb://127.0.0.1:27017` | MongoDB connection string — local mongod (auto-started) or a `mongodb+srv://…` Atlas cluster |
+| `MONGODB_DB` | `cardly` | Database name when the URI has no `/dbname` suffix |
 | `AUTH_SECRET` | dev fallback | 🔴 Session-cookie signing secret. **Required in production** (app refuses to boot without it). Generate: `openssl rand -hex 32` |
 | `SESSION_TTL_DAYS` | `30` | Login session lifetime |
 | `APP_URL` | request origin | 🔴 Canonical public origin (no trailing slash) used for share links, QR codes & reset e-mails |
@@ -130,11 +133,18 @@ All backend configuration is centralized in `src/lib/env.ts` and driven by these
 | `EMAIL_FROM` | `Cardly <onboarding@resend.dev>` | Sender identity for reset e-mails |
 | `RATE_LIMIT_MAX` | `20` | Auth attempts per IP per window (login/signup/reset) |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window |
-| `DEBUG_PRISMA` | — | `1` logs all queries in production |
 
-**Switching to PostgreSQL/MySQL:** set `DB_PROVIDER=postgresql` + a matching `DATABASE_URL`
-then run `npm run db:setup` — the schema provider is rewritten for you. Note the database starts
-empty (migrate your SQLite data separately if needed).
+**Switching to MongoDB Atlas:** create a free cluster at [cloud.mongodb.com](https://cloud.mongodb.com),
+allow your IP in Network Access, create a database user, then set:
+
+```bash
+MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+```
+
+Restart the app — collections and indexes (`users`, `cards`) are created automatically on first use.
+
+**Handy scripts:** `npm run db:start` (start/ensure the local mongod) and
+`npm run db:reset` (stop it and wipe local data).
 
 **Health & config endpoints:** `GET /api/health` (db up/down + active config) and
 `GET /api/config` (public client settings).
@@ -142,12 +152,11 @@ empty (migrate your SQLite data separately if needed).
 ## ☁️ Deployment (Vercel)
 
 1. Push the repository to GitHub and import it in Vercel.
-2. Set the 🔴 variables from the table above (`DATABASE_URL`, `AUTH_SECRET`, `APP_URL`,
-   `NEXT_PUBLIC_APP_URL`, and turn `DEMO_MODE` off unless you want the demo button).
-3. Prisma needs the database reachable during build — with Postgres/Neon add
-   `POSTGRES_PRISMA_URL`-style pooled connection if your provider requires it.
-4. `npm run build` produces a standalone output; Vercel's Next.js preset works out of the box.
-5. All API routes are serverless-friendly; images are embedded in card JSON, so no storage bucket is
+2. Set the 🔴 variables from the table above (`MONGODB_URI`, `AUTH_SECRET`, `APP_URL`,
+   `NEXT_PUBLIC_APP_URL`, and turn `DEMO_MODE` off unless you want the demo button). Use a
+   MongoDB Atlas URI (or any managed Mongo) — the app connects at runtime, nothing to do at build time.
+3. `npm run build` produces a standalone output; Vercel's Next.js preset works out of the box.
+4. All API routes are serverless-friendly; images are embedded in card JSON, so no storage bucket is
    required. For heavier storage needs, move image uploads to Supabase Storage / S3 and store the URL
    in the `ImageElement.src` field.
 
