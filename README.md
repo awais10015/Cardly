@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Cardly — Digital Card & Invitation Maker
 
 **Create Beautiful Cards. Share Moments That Matter.**
@@ -175,3 +176,5 @@ Restart the app — collections and indexes (`users`, `cards`) are created autom
 - Publish → public link → QR code → public viewer with PNG download
 - Business card front/back + vCard download, invitation smart fields sync
 - Sign up / sign in / demo login / password reset / profile & password change
+=======
+# Cardly
