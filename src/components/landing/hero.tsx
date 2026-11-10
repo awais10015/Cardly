@@ -8,6 +8,7 @@ import { TEMPLATES, getTemplate } from '@/lib/design/templates'
 import { useApp } from '@/lib/stores/app-store'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 const FLOATERS = ['tpl-biz-noir', 'tpl-wed-blush', 'tpl-bday-confetti', 'tpl-eid-emerald', 'tpl-biz-waves']
 
@@ -104,7 +105,10 @@ export function Hero() {
               return (
                 <motion.div
                   key={id}
-                  className="cursor-pointer"
+                  className={cn(
+                    'min-w-0 cursor-pointer max-sm:flex-1',
+                    (i === 0 || i === FLOATERS.length - 1) && 'max-sm:hidden',
+                  )}
                   animate={{
                     y: isActive ? -18 : [0, -7, 0],
                     scale: isActive ? 1.12 : 1,

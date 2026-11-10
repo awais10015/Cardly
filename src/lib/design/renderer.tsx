@@ -407,6 +407,13 @@ export function CardRenderer({
 
 /* ------------------------- scaled card preview ----------------------- */
 
+/**
+ * Renders the card at a scaled-down size WITHOUT touching the design's own
+ * width/height. Besides the explicit `maxWidth` / `maxHeight` caps, the card
+ * is always capped to its REAL container width (ResizeObserver), so wide
+ * landscape designs (business cards) shrink to fit narrow phone screens and
+ * small grid cells instead of overflowing or being clipped.
+ */
 export function ScaledCard({
   design,
   side,
@@ -415,36 +422,53 @@ export function ScaledCard({
   maxHeight,
   radius = 28,
   className,
+  shadow = true,
 }: {
   design: CardDesign
   side?: 'front' | 'back'
+  /** Explicit scale — disables container auto-fitting. */
   scale?: number
   maxWidth?: number
   maxHeight?: number
   radius?: number
   className?: string
+  shadow?: boolean
 }) {
+  const wrapRef = React.useRef<HTMLDivElement>(null)
+  const [avail, setAvail] = React.useState(0)
+
+  React.useEffect(() => {
+    if (scale != null) return
+    const el = wrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0
+      if (w > 0) setAvail(w)
+    })
+    ro.observe(el)
+    if (el.clientWidth > 0) setAvail(el.clientWidth)
+    return () => ro.disconnect()
+  }, [scale])
+
+  const capW = maxWidth ?? 240
+  const capH = maxHeight ?? 240
   const s =
-    scale ??
-    Math.min((maxWidth ?? 240) / design.width, (maxHeight ?? 240) / design.height)
+    scale ?? Math.min(Math.min(capW, avail > 0 ? avail : capW) / design.width, capH / design.height)
+
   return (
-    <div
-      className={className}
-      style={{ width: design.width * s, height: design.height * s, position: 'relative' }}
-    >
-      <div style={{ transform: `scale(${s})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
-        <CardRenderer design={design} side={side} radius={radius} />
+    <div ref={wrapRef} className={'flex w-full justify-center ' + (className ?? '')}>
+      <div style={{ width: design.width * s, height: design.height * s, position: 'relative' }}>
+        <div style={{ transform: `scale(${s})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
+          <CardRenderer design={design} side={side} radius={radius} shadow={shadow} />
+        </div>
       </div>
     </div>
   )
 }
 
-/* ------------------- responsive auto-fitting card ----------------------- */
-
 /**
- * ScaledCard that also respects its ACTUAL container width (ResizeObserver),
- * so big designs never overflow small phone screens. Used by the public card
- * viewer and the template detail page — anywhere the card must simply fit.
+ * ScaledCard with defaults tuned for full-size viewers (public card page,
+ * template detail). Kept as a separate export for API compatibility.
  */
 export function ScaledCardAuto({
   design,
@@ -461,30 +485,14 @@ export function ScaledCardAuto({
   radius?: number
   className?: string
 }) {
-  const ref = React.useRef<HTMLDivElement>(null)
-  const [avail, setAvail] = React.useState(0)
-
-  React.useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ro = new ResizeObserver((entries) => {
-      setAvail(entries[0].contentRect.width)
-    })
-    ro.observe(el)
-    setAvail(el.clientWidth)
-    return () => ro.disconnect()
-  }, [])
-
-  const cap = avail > 0 ? Math.min(maxWidth, avail) : maxWidth
-  const s = Math.min(cap / design.width, maxHeight / design.height)
-
   return (
-    <div ref={ref} className={'flex w-full justify-center ' + (className ?? '')}>
-      <div style={{ width: design.width * s, height: design.height * s, position: 'relative' }}>
-        <div style={{ transform: 'scale(' + s + ')', transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
-          <CardRenderer design={design} side={side} radius={radius} />
-        </div>
-      </div>
-    </div>
+    <ScaledCard
+      design={design}
+      side={side}
+      maxWidth={maxWidth}
+      maxHeight={maxHeight}
+      radius={radius}
+      className={className}
+    />
   )
 }
