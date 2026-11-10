@@ -57,3 +57,31 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Next.js cache
+.next/cache/
+
+# Package manager cache
+.npm/
+.pnpm-store/
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary and backup files
+*.bak
+*.swp
+*.swo
+
+# Editor files
+.vscode/*
+!.vscode/extensions.json
