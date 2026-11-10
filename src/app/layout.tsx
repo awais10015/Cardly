@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     "QR code sharing",
   ],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/logo.png",
   },
 };
 
