@@ -320,7 +320,7 @@ export function DashboardView() {
 
       {/* preview dialog */}
       <Dialog open={Boolean(preview)} onOpenChange={(v) => !v && setPreview(null)}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl max-h-[92dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="pr-6">{preview?.title}</DialogTitle>
           </DialogHeader>

@@ -208,7 +208,9 @@ export function EditorView({ cardId }: { cardId: string | null }) {
   const zoomPct = zoom === 'fit' ? null : Math.round(zoom * 100)
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-secondary/40">
+    // h-svh (small viewport height) keeps the bottom bar reachable on mobile
+    // browsers where 100vh ignores the address bar; h-screen is the fallback.
+    <div className="flex h-screen h-svh flex-col overflow-hidden bg-secondary/40">
       {/* ------------------------------ toolbar ------------------------------ */}
       <header className="z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/60 bg-background px-2 sm:px-3">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -218,7 +220,7 @@ export function EditorView({ cardId }: { cardId: string | null }) {
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="h-8 w-32 border-transparent bg-transparent text-sm font-semibold shadow-none hover:border-border sm:w-56"
+            className="h-8 w-20 min-w-0 border-transparent bg-transparent text-sm font-semibold shadow-none hover:border-border sm:w-56"
             aria-label="Card title"
           />
           {status === 'published' && (
@@ -230,10 +232,10 @@ export function EditorView({ cardId }: { cardId: string | null }) {
         </div>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => useEditor.getState().undo()} title="Undo (⌘Z)" aria-label="Undo">
+          <Button variant="ghost" size="icon" className="hidden h-8 w-8 sm:flex" onClick={() => useEditor.getState().undo()} title="Undo (⌘Z)" aria-label="Undo">
             <Undo2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => useEditor.getState().redo()} title="Redo (⌘⇧Z)" aria-label="Redo">
+          <Button variant="ghost" size="icon" className="hidden h-8 w-8 sm:flex" onClick={() => useEditor.getState().redo()} title="Redo (⌘⇧Z)" aria-label="Redo">
             <Redo2 className="h-4 w-4" />
           </Button>
 
@@ -369,28 +371,36 @@ export function EditorView({ cardId }: { cardId: string | null }) {
         )}
       </div>
 
-      {/* mobile bottom bar */}
-      <div className="flex h-12 shrink-0 items-center justify-around border-t border-border/60 bg-background lg:hidden">
+      {/* mobile bottom bar - safe-area padding keeps it above the home indicator */}
+      <div className="flex shrink-0 items-center justify-around border-t border-border/60 bg-background pb-[env(safe-area-inset-bottom)] lg:hidden">
         <button
-          className="flex flex-col items-center gap-0.5 px-4 text-[10px] font-medium text-muted-foreground"
+          className="flex min-h-12 flex-col items-center justify-center gap-0.5 px-3 text-[10px] font-medium text-muted-foreground"
           onClick={() => setMobilePanel(mobilePanel === 'left' ? null : 'left')}
         >
           <Pencil className="h-4 w-4" /> Add
         </button>
         <button
-          className="flex flex-col items-center gap-0.5 px-4 text-[10px] font-medium text-muted-foreground"
+          className="flex min-h-12 flex-col items-center justify-center gap-0.5 px-3 text-[10px] font-medium text-muted-foreground"
           onClick={() => setMobilePanel(mobilePanel === 'right' ? null : 'right')}
         >
           <PanelRightClose className="h-4 w-4" /> Settings
         </button>
         <button
-          className="flex flex-col items-center gap-0.5 px-4 text-[10px] font-medium text-muted-foreground"
+          className="flex min-h-12 flex-col items-center justify-center gap-0.5 px-3 text-[10px] font-medium text-muted-foreground"
           onClick={() => useEditor.getState().undo()}
+          aria-label="Undo"
         >
           <Undo2 className="h-4 w-4" /> Undo
         </button>
         <button
-          className="flex flex-col items-center gap-0.5 px-4 text-[10px] font-medium text-muted-foreground"
+          className="flex min-h-12 flex-col items-center justify-center gap-0.5 px-3 text-[10px] font-medium text-muted-foreground"
+          onClick={() => useEditor.getState().redo()}
+          aria-label="Redo"
+        >
+          <Redo2 className="h-4 w-4" /> Redo
+        </button>
+        <button
+          className="flex min-h-12 flex-col items-center justify-center gap-0.5 px-3 text-[10px] font-medium text-muted-foreground"
           onClick={() => setShareOpen(true)}
         >
           <Share2 className="h-4 w-4" /> Share

@@ -116,7 +116,7 @@ export function AuthDialog() {
 
   return (
     <Dialog open={authOpen} onOpenChange={(v) => (v ? undefined : closeAuth())}>
-      <DialogContent className="max-w-md overflow-hidden p-0">
+      <DialogContent className="max-w-md max-h-[92dvh] overflow-y-auto p-0">
         <div className="bg-gradient-to-br from-violet-600 via-violet-600 to-fuchsia-500 px-6 py-6 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl text-white">

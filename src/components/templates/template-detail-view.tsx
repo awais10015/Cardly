@@ -4,7 +4,7 @@ import * as React from 'react'
 import { ArrowLeft, Crown, Heart, Layers, Palette, Ruler, Sparkles } from 'lucide-react'
 import { getTemplate, templateOrientation } from '@/lib/design/templates'
 import { CATEGORY_META } from '@/lib/design/types'
-import { ScaledCard } from '@/lib/design/renderer'
+import { ScaledCardAuto } from '@/lib/design/renderer'
 import { useApp } from '@/lib/stores/app-store'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -43,7 +43,7 @@ export function TemplateDetailView({ id }: { id?: string }) {
 
         <div className="mt-6 grid gap-10 lg:grid-cols-[1.1fr_1fr]">
           {/* preview */}
-          <div className="checker-bg relative grid min-h-[420px] place-items-center overflow-hidden rounded-3xl border border-border/70 p-8">
+          <div className="checker-bg relative grid grid-cols-1 min-h-[420px] place-items-center overflow-hidden rounded-3xl border border-border/70 p-8">
             <div className="absolute left-4 top-4 rounded-full bg-black/45 px-3 py-1 text-xs font-medium capitalize text-white backdrop-blur">
               {side}
             </div>
@@ -63,8 +63,8 @@ export function TemplateDetailView({ id }: { id?: string }) {
                 ))}
               </div>
             )}
-            <div className="max-h-[620px]">
-              <ScaledCard design={tpl.design} side={side} maxWidth={520} maxHeight={600} radius={24} />
+            <div className="max-h-[620px] w-full">
+              <ScaledCardAuto design={tpl.design} side={side} maxWidth={520} maxHeight={600} radius={24} />
             </div>
           </div>
 

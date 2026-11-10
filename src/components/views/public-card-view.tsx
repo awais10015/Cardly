@@ -7,7 +7,7 @@ import {
   ArrowLeftRight, Download, Loader2, Share2, Sparkles,
 } from 'lucide-react'
 import { publicApi } from '@/lib/api-client'
-import { ScaledCard } from '@/lib/design/renderer'
+import { ScaledCardAuto } from '@/lib/design/renderer'
 import { exportPng, shareViaWebShare, useAsyncTask } from '@/lib/design/export'
 import type { CardDoc } from '@/lib/design/types'
 import { useApp } from '@/lib/stores/app-store'
@@ -72,9 +72,9 @@ export function PublicCardView({ slug }: { slug: string }) {
         initial={{ opacity: 0, y: 24, rotateY: side === 'back' ? -8 : 8 }}
         animate={{ opacity: 1, y: 0, rotateY: 0 }}
         transition={{ type: 'spring', stiffness: 160, damping: 20 }}
-        className="relative z-10"
+        className="relative z-10 w-full"
       >
-        <ScaledCard design={card.design} side={side} maxWidth={760} maxHeight={520} radius={24} />
+        <ScaledCardAuto design={card.design} side={side} maxWidth={760} maxHeight={520} radius={24} />
       </motion.div>
 
       <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-2.5">

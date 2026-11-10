@@ -438,3 +438,53 @@ export function ScaledCard({
     </div>
   )
 }
+
+/* ------------------- responsive auto-fitting card ----------------------- */
+
+/**
+ * ScaledCard that also respects its ACTUAL container width (ResizeObserver),
+ * so big designs never overflow small phone screens. Used by the public card
+ * viewer and the template detail page — anywhere the card must simply fit.
+ */
+export function ScaledCardAuto({
+  design,
+  side,
+  maxWidth = 760,
+  maxHeight = 520,
+  radius = 24,
+  className,
+}: {
+  design: CardDesign
+  side?: 'front' | 'back'
+  maxWidth?: number
+  maxHeight?: number
+  radius?: number
+  className?: string
+}) {
+  const ref = React.useRef<HTMLDivElement>(null)
+  const [avail, setAvail] = React.useState(0)
+
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      setAvail(entries[0].contentRect.width)
+    })
+    ro.observe(el)
+    setAvail(el.clientWidth)
+    return () => ro.disconnect()
+  }, [])
+
+  const cap = avail > 0 ? Math.min(maxWidth, avail) : maxWidth
+  const s = Math.min(cap / design.width, maxHeight / design.height)
+
+  return (
+    <div ref={ref} className={'flex w-full justify-center ' + (className ?? '')}>
+      <div style={{ width: design.width * s, height: design.height * s, position: 'relative' }}>
+        <div style={{ transform: 'scale(' + s + ')', transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
+          <CardRenderer design={design} side={side} radius={radius} />
+        </div>
+      </div>
+    </div>
+  )
+}
