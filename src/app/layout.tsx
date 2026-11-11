@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     "QR code sharing",
   ],
   icons: {
-    icon: "/logo.png",
+    icon: "./logo.png",
   },
 };
 
